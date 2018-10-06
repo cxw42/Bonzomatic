@@ -8,7 +8,7 @@
 #define GLEW_NO_GLU
 #include "GL/glew.h"
 #ifdef _WIN32
-#include <GL/wGLew.h>
+#include <GL/wglew.h>
 #endif
 
 #define GLFW_INCLUDE_NONE
