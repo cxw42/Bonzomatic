@@ -28,7 +28,6 @@
 #ifndef _glfw3_wgl_context_h_
 #define _glfw3_wgl_context_h_
 
-
 #define WGL_NUMBER_PIXEL_FORMATS_ARB 0x2000
 #define WGL_SUPPORT_OPENGL_ARB 0x2010
 #define WGL_DRAW_TO_WINDOW_ARB 0x2001
@@ -109,9 +108,12 @@ typedef BOOL (WINAPI * WGLSHARELISTS_T)(HGLRC,HGLRC);
 //
 typedef struct _GLFWcontextWGL
 {
-    HDC       dc;
+    HDC       dc;              // Private GDI device context
     HGLRC     handle;
     int       interval;
+
+	HDC       affinityDC;      // gpu affinity device context
+    HGLRC     context;         // Permanent rendering context
 
 } _GLFWcontextWGL;
 
@@ -134,9 +136,20 @@ typedef struct _GLFWlibraryWGL
     PFNWGLGETEXTENSIONSSTRINGEXTPROC    GetExtensionsStringEXT;
     PFNWGLGETEXTENSIONSSTRINGARBPROC    GetExtensionsStringARB;
     PFNWGLCREATECONTEXTATTRIBSARBPROC   CreateContextAttribsARB;
+	PFNWGLCREATEAFFINITYDCNVPROC		CreateAffinityDCNV;
+	PFNWGLDELETEDCNVPROC				DeleteDCNV;
+	PFNWGLENUMGPUSNVPROC				EnumGpusNV;
+    GLboolean                           EXT_swap_control;
+    GLboolean                           ARB_multisample;
+    GLboolean                           ARB_framebuffer_sRGB;
     GLFWbool                            EXT_swap_control;
     GLFWbool                            ARB_multisample;
     GLFWbool                            ARB_framebuffer_sRGB;
+    GLboolean                           ARB_create_context_profile;
+    GLboolean                           EXT_create_context_es2_profile;
+    GLboolean                           ARB_create_context_robustness;
+	GLboolean							NV_gpu_affinity;
+
     GLFWbool                            EXT_framebuffer_sRGB;
     GLFWbool                            ARB_pixel_format;
     GLFWbool                            ARB_create_context;

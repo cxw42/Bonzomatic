@@ -260,6 +260,9 @@ void glfwDefaultWindowHints(void)
 
     // The default is to select the highest available refresh rate
     _glfw.hints.refreshRate = GLFW_DONT_CARE;
+
+	// Set the default gpu to -1.
+    _glfw.hints.gpu = -1;
 }
 
 GLFWAPI void glfwWindowHint(int hint, int value)
@@ -366,6 +369,11 @@ GLFWAPI void glfwWindowHint(int hint, int value)
             break;
         case GLFW_REFRESH_RATE:
             _glfw.hints.refreshRate = value;
+        case GLFW_OPENGL_PROFILE:
+            _glfw.hints.glProfile = hint;
+            break;
+		case GLFW_AFFINITY_GPU:
+            _glfw.hints.gpu = hint;
             break;
         default:
             _glfwInputError(GLFW_INVALID_ENUM, "Invalid window hint %i", hint);

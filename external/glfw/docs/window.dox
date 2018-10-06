@@ -199,6 +199,12 @@ full screen windows.  This hint is ignored for full screen windows.
 `GLFW_MAXIMIZED` specifies whether the windowed mode window will be maximized
 when created.  This hint is ignored for full screen windows.
 
+The `GLFW_AFFINITY_GPU` hint specifies which GPU should render OpenGL commands
+for the associated context. This uses the WGL_NV_gpu_affinity extension, and is
+only available on windows systems. The value corresponds with an index position
+returned from a call to wglEnumGpusNV(...). Note that if sharing context resources
+with another window, both windows must have the same affinity gpu mask.
+
 
 @subsubsection window_hints_fb Framebuffer related hints
 
@@ -237,6 +243,11 @@ and a created OpenGL ES context will always have sRGB rendering enabled.
 
 `GLFW_DOUBLEBUFFER` specifies whether the framebuffer should be double buffered.
 You nearly always want to use double buffering.  This is a hard constraint.
+
+| `GLFW_OPENGL_FORWARD_COMPAT` | `GL_FALSE`                | `GL_TRUE` or `GL_FALSE` |
+| `GLFW_OPENGL_DEBUG_CONTEXT`  | `GL_FALSE`                | `GL_TRUE` or `GL_FALSE` |
+| `GLFW_OPENGL_PROFILE`        | `GLFW_OPENGL_ANY_PROFILE` | `GLFW_OPENGL_ANY_PROFILE`, `GLFW_OPENGL_COMPAT_PROFILE` or `GLFW_OPENGL_CORE_PROFILE` |
+| `GLFW_AFFINITY_GPU`          | -1                        | 0 to maximum number of GPUs |
 
 
 @subsubsection window_hints_mtr Monitor related hints
