@@ -69,6 +69,7 @@ int main(int argc, const char *argv[])
   settings.nWidth = 1920;
   settings.nHeight = 1080;
   settings.windowMode = RENDERER_WINDOWMODE_FULLSCREEN;
+  settings.which_gpu = ANY_GPU;
   if (options.has<jsonxx::Object>("window"))
   {
     if (options.get<jsonxx::Object>("window").has<jsonxx::Number>("width"))
@@ -77,6 +78,8 @@ int main(int argc, const char *argv[])
       settings.nHeight = options.get<jsonxx::Object>("window").get<jsonxx::Number>("height");
     if (options.get<jsonxx::Object>("window").has<jsonxx::Boolean>("fullscreen"))
       settings.windowMode = options.get<jsonxx::Object>("window").get<jsonxx::Boolean>("fullscreen") ? RENDERER_WINDOWMODE_FULLSCREEN : RENDERER_WINDOWMODE_WINDOWED;
+    if (options.get<jsonxx::Object>("window").has<jsonxx::Number>("gpu"))
+      settings.which_gpu = options.get<jsonxx::Object>("window").get<jsonxx::Number>("gpu");
   }
   if (!Renderer::OpenSetupDialog( &settings ))
     return -1;

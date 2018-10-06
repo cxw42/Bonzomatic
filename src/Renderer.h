@@ -6,12 +6,15 @@ typedef enum {
   RENDERER_WINDOWMODE_BORDERLESS
 } RENDERER_WINDOWMODE;
 
+const unsigned int ANY_GPU = static_cast<unsigned int>(-1);
+
 typedef struct 
 {
   int nWidth;
   int nHeight;
   RENDERER_WINDOWMODE windowMode;
   bool bVsync;
+  unsigned int which_gpu;
 } RENDERER_SETTINGS;
 
 namespace Renderer
