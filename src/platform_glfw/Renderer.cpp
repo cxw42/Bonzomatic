@@ -238,6 +238,8 @@ namespace Renderer
     // TODO: change in case of resize support
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
+    glfwWindowHint(GLFW_AFFINITY_GPU, settings->which_gpu);
+
     GLFWmonitor *monitor = settings->windowMode == RENDERER_WINDOWMODE_FULLSCREEN ? glfwGetPrimaryMonitor() : NULL;
 
     mWindow = glfwCreateWindow(nWidth, nHeight, "BONZOMATIC - GLFW edition", monitor, NULL);
