@@ -89,6 +89,13 @@ typedef HDC (WINAPI * WGLGETCURRENTDC_T)(void);
 typedef BOOL (WINAPI * WGLMAKECURRENT_T)(HDC,HGLRC);
 typedef BOOL (WINAPI * WGLSHARELISTS_T)(HGLRC,HGLRC);
 
+DECLARE_HANDLE(HGPUNV);
+typedef HDC (WINAPI * PFNWGLCREATEAFFINITYDCNVPROC) (const HGPUNV *phGpuList);
+typedef BOOL (WINAPI * PFNWGLDELETEDCNVPROC) (HDC hdc);
+//typedef BOOL (WINAPI * PFNWGLENUMGPUDEVICESNVPROC) (HGPUNV hGpu, UINT iDeviceIndex, PGPU_DEVICE lpGpuDevice);
+//typedef BOOL (WINAPI * PFNWGLENUMGPUSFROMAFFINITYDCNVPROC) (HDC hAffinityDC, UINT iGpuIndex, HGPUNV *hGpu);
+typedef BOOL (WINAPI * PFNWGLENUMGPUSNVPROC) (UINT iGpuIndex, HGPUNV *phGpu);
+
 // opengl32.dll function pointer typedefs
 #define wglCreateContext _glfw.wgl.CreateContext
 #define wglDeleteContext _glfw.wgl.DeleteContext
@@ -110,6 +117,7 @@ typedef BOOL (WINAPI * WGLSHARELISTS_T)(HGLRC,HGLRC);
 typedef struct _GLFWcontextWGL
 {
     HDC       dc;
+    HDC       affinityDC;
     HGLRC     handle;
     int       interval;
 
@@ -134,6 +142,10 @@ typedef struct _GLFWlibraryWGL
     PFNWGLGETEXTENSIONSSTRINGEXTPROC    GetExtensionsStringEXT;
     PFNWGLGETEXTENSIONSSTRINGARBPROC    GetExtensionsStringARB;
     PFNWGLCREATECONTEXTATTRIBSARBPROC   CreateContextAttribsARB;
+    PFNWGLCREATEAFFINITYDCNVPROC        CreateAffinityDCNV;
+    PFNWGLDELETEDCNVPROC                DeleteDCNV;
+    PFNWGLENUMGPUSNVPROC                EnumGpusNV;
+
     GLFWbool                            EXT_swap_control;
     GLFWbool                            ARB_multisample;
     GLFWbool                            ARB_framebuffer_sRGB;
@@ -144,6 +156,7 @@ typedef struct _GLFWlibraryWGL
     GLFWbool                            EXT_create_context_es2_profile;
     GLFWbool                            ARB_create_context_robustness;
     GLFWbool                            ARB_context_flush_control;
+    GLFWbool                            NV_gpu_affinity;
 
 } _GLFWlibraryWGL;
 

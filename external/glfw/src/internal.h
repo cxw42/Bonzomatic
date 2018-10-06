@@ -435,6 +435,7 @@ struct _GLFWlibrary
         _GLFWwndconfig  window;
         _GLFWctxconfig  context;
         int             refreshRate;
+        int             gpu;
     } hints;
 
     _GLFWcursor*        cursorListHead;

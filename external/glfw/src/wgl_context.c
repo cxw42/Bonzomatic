@@ -327,6 +327,21 @@ static void destroyContextWGL(_GLFWwindow* window)
         wglDeleteContext(window->context.wgl.handle);
         window->context.wgl.handle = NULL;
     }
+
+    // Note: ReleaseDC() is a no-op per
+    // https://github.com/glfw/glfw/commit/12903ee9b585389e517c3eee2de0a7edbc70382d
+    // However, I don't personally know why, so I'm putting it back in for now.
+    if (window->context.wgl.dc)
+    {
+        ReleaseDC(window->win32.handle, window->context.wgl.dc);
+        window->context.wgl.dc = NULL;
+    }
+
+ 	if (window->context.wgl.affinityDC)
+	{
+		_glfw.wgl.DeleteDCNV(window->context.wgl.affinityDC);
+		window->context.wgl.affinityDC = NULL;
+	}
 }
 
 // Initialize WGL-specific extensions
@@ -335,7 +350,7 @@ static void loadWGLExtensions(void)
 {
     PIXELFORMATDESCRIPTOR pfd;
     HGLRC rc;
-    HDC dc = GetDC(_glfw.win32.helperWindowHandle);;
+    HDC dc = GetDC(_glfw.win32.helperWindowHandle);
 
     _glfw.wgl.extensionsLoaded = GLFW_TRUE;
 
@@ -410,6 +425,18 @@ static void loadWGLExtensions(void)
         extensionSupportedWGL("WGL_ARB_pixel_format");
     _glfw.wgl.ARB_context_flush_control =
         extensionSupportedWGL("WGL_ARB_context_flush_control");
+    _glfw.wgl.NV_gpu_affinity =
+        extensionSupportedWGL("WGL_NV_gpu_affinity");
+
+    // Get other function addresses not required for the tests above
+    if(_glfw.wgl.NV_gpu_affinity) {
+        _glfw.wgl.CreateAffinityDCNV = (PFNWGLCREATEAFFINITYDCNVPROC)
+            wglGetProcAddress("wglCreateAffinityDCNV");
+        _glfw.wgl.DeleteDCNV = (PFNWGLDELETEDCNVPROC)
+            wglGetProcAddress("wglDeleteDCNV");
+        _glfw.wgl.EnumGpusNV = (PFNWGLENUMGPUSNVPROC)
+            wglGetProcAddress("wglEnumGpusNV");
+    }
 
     wglMakeCurrent(dc, NULL);
     wglDeleteContext(rc);
@@ -509,6 +536,8 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
         return GLFW_FALSE;
     }
 
+    // Make sure the required functions are available
+
     if (ctxconfig->client == GLFW_OPENGL_API)
     {
         if (ctxconfig->forward)
@@ -542,6 +571,45 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
             return GLFW_FALSE;
         }
     }
+
+    if (_glfw.hints.gpu != GLFW_DONT_CARE) {
+        if (!_glfw.wgl.NV_gpu_affinity)
+        {
+            _glfwInputError(GLFW_API_UNAVAILABLE,
+                            "WGL: GPU affinity requested but WGL_NV_gpu_affinity extension is unavailable");
+            return GLFW_FALSE;
+        }
+    }
+
+    // If the nvidia affinity extension is available and the gpu has been set
+    // through a hint, create an affinityDC bound to a specific gpu.  We create
+    // the affinityDC and then make an affinity context using the affinityDC.
+    // Because we are doing onscreen rendering and the affinityDC isn't bound
+    // to a window (i.e. doesn't contain a framebuffer), we make the
+    // affinitycontext current with the normal dc that is bound to the window.
+
+	if (_glfw.hints.gpu != GLFW_DONT_CARE)
+	{
+		HGPUNV gpuMask;
+		_glfw.wgl.EnumGpusNV(_glfw.hints.gpu, &gpuMask);
+		window->context.wgl.affinityDC = _glfw.wgl.CreateAffinityDCNV(&gpuMask);
+
+		if (!window->context.wgl.affinityDC)
+		{
+			_glfwInputError(GLFW_PLATFORM_ERROR,
+							"WGL: Failed to create NV Affinity DC for window");
+            return GLFW_FALSE;
+		}
+
+		if (!SetPixelFormat(window->context.wgl.affinityDC, pixelFormat, &pfd))
+        {
+            _glfwInputError(GLFW_PLATFORM_ERROR,
+                            "WGL: Failed to set selected pixel format for affinity DC");
+            return GLFW_FALSE;
+        }
+	}
+
+    // Set the context's attributes
 
     if (_glfw.wgl.ARB_create_context)
     {
@@ -618,9 +686,22 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
 
         setWGLattrib(0, 0);
 
-        window->context.wgl.handle =
-            _glfw.wgl.CreateContextAttribsARB(window->context.wgl.dc,
-                                              share, attribs);
+        // Actually create the context
+
+        if (window->context.wgl.affinityDC)
+        {
+            window->context.wgl.handle =
+                _glfw.wgl.CreateContextAttribsARB(window->context.wgl.affinityDC,
+                                                  share,
+                                                  attribs);
+		}
+		else
+		{
+            window->context.wgl.handle =
+                _glfw.wgl.CreateContextAttribsARB(window->context.wgl.dc,
+                                                  share, attribs);
+		}
+
         if (!window->context.wgl.handle)
         {
             const DWORD error = GetLastError();
@@ -664,9 +745,17 @@ GLFWbool _glfwCreateContextWGL(_GLFWwindow* window,
             return GLFW_FALSE;
         }
     }
-    else
+    else // _glfw.wgl.ARB_create_context not available
     {
-        window->context.wgl.handle = wglCreateContext(window->context.wgl.dc);
+        if(window->context.wgl.affinityDC)
+        {
+            window->context.wgl.handle = wglCreateContext(window->context.wgl.affinityDC);
+        }
+        else
+        {
+            window->context.wgl.handle = wglCreateContext(window->context.wgl.dc);
+        }
+
         if (!window->context.wgl.handle)
         {
             _glfwInputError(GLFW_VERSION_UNAVAILABLE,
@@ -716,3 +805,9 @@ GLFWAPI HGLRC glfwGetWGLContext(GLFWwindow* handle)
     return window->context.wgl.handle;
 }
 
+GLFWAPI HDC glfwGetWGLDC(GLFWwindow* handle)
+{
+	_GLFWwindow* window = (_GLFWwindow*) handle;
+    _GLFW_REQUIRE_INIT_OR_RETURN(NULL);
+	return window->context.wgl.dc;
+}

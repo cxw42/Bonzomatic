@@ -6,7 +6,7 @@ typedef enum {
   RENDERER_WINDOWMODE_BORDERLESS
 } RENDERER_WINDOWMODE;
 
-const unsigned int ANY_GPU = static_cast<unsigned int>(-1);
+const unsigned int ANY_GPU = (unsigned int)(-1); // == GLFW_DONT_CARE
 
 typedef struct 
 {
